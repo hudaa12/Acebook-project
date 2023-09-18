@@ -101,3 +101,5 @@ It'll help with your understanding of what is going on in the `.gitlab-ci.yml` f
 ## Additional resources
 
 - [The package.json guide](https://nodejs.dev/learn/the-package-json-guide)
+
+- I am the best
