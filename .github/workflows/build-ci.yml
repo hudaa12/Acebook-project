@@ -37,8 +37,8 @@ jobs:
     steps:
       - name: Install SSH client and rsync
         run: |
-          apt-get update -y
-          apt-get install -y openssh-client rsync
+          sudo apt-get update -y
+          sudo apt-get install -y openssh-client rsync
       - name: Set up SSH agent and deploy
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
