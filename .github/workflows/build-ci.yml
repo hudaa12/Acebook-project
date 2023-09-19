@@ -47,5 +47,5 @@ jobs:
           echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          rsync -av -e "ssh -o StrictHostKeyChecking=no" ~/AWSDeployment/acebook-node-template-team-chocolate-new ec2-user@35.178.181.29:/var/acebook/
+          rsync -av -e "ssh -o StrictHostKeyChecking=no" ~/AWSDeployment/acebook-node-template-team-chocolate ec2-user@35.178.181.29:/var/acebook/
           ssh -o StrictHostKeyChecking=no ec2-user@35.178.181.29 "sudo systemctl restart acebook"
