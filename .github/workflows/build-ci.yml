@@ -31,4 +31,21 @@ jobs:
         with:
           config-file: cypress.config.js
           start: npm run start:ci
-  
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install SSH client and rsync
+        run: |
+          apt-get update -y
+          apt-get install -y openssh-client rsync
+      - name: Set up SSH agent and deploy
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          eval $(ssh-agent -s)
+          echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          rsync -av -e "ssh -o StrictHostKeyChecking=no" ./* ec2-user@52.12.34.133:/var/acebook/
+          ssh -o StrictHostKeyChecking=no ec2-user@52.12.34.133 "sudo systemctl restart acebook"
