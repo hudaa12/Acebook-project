@@ -51,3 +51,4 @@ jobs:
           chmod 700 ~/.ssh
           rsync -av -e "ssh -o StrictHostKeyChecking=no" ./* ec2-user@35.178.181.29:/var/acebook/
           ssh -o StrictHostKeyChecking=no ec2-user@35.178.181.29 "sudo systemctl restart acebook"
+          
