@@ -44,6 +44,7 @@ jobs:
       - name: Set up SSH agent and deploy
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          MONGODB_URL: ${{ secrets.EC2_DB_IP }}
         run: |
           eval $(ssh-agent -s)
           echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
