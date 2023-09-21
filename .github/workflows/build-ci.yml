@@ -49,8 +49,8 @@ jobs:
           echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          rsync -av -e "ssh -o StrictHostKeyChecking=no" ./* ec2-user@35.178.181.29:/var/acebook/
-          ssh -o StrictHostKeyChecking=no ec2-user@35.178.181.29 "sudo systemctl restart acebook"
-          rsync -av -e "ssh -o StrictHostKeyChecking=no" ./* ec2-user@18.135.6.250:/var/acebook/
-          ssh -o StrictHostKeyChecking=no ec2-user@18.135.6.250 "sudo systemctl restart acebook"
+          rsync -av -e "ssh -o StrictHostKeyChecking=no" ./* ec2-user@${{ secrets.EC2_1_IP }}:/var/acebook/
+          ssh -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_1_IP }} "sudo systemctl restart acebook"
+          rsync -av -e "ssh -o StrictHostKeyChecking=no" ./* ec2-user@${{ secrets.EC2_2_IP }}:/var/acebook/
+          ssh -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_2_IP }} "sudo systemctl restart acebook"
           
