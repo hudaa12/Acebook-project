@@ -1,9 +1,9 @@
----
-name: Build CI
+name: Build CI and Deploy
 on:
   push:
     branches:
-      - main
+      - main  # Replace with the appropriate branch name
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -17,9 +17,9 @@ jobs:
       MONGODB_URL: mongodb://localhost:27017/acebook_test
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v2
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v2
         with:
           node-version: 18
       - name: Install dependencies
@@ -33,35 +33,49 @@ jobs:
         with:
           config-file: cypress.config.js
           start: npm run start:ci
+
   deploy:
+    name: Deploy
     needs: build
     runs-on: ubuntu-latest
     env:
+      INSTANCE_IP: ${{ secrets.EC2_1_IP }}
+      INSTANCE_IP_TWO: ${{ secrets.EC2_2_IP }}
       SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_INSTANCE_SG_ID: sg-0ed305e22ac5d52a6
     defaults:
       run:
         working-directory: ./
     steps:
-      - name: Checkout code
+      - name: Check out the repository to the runner
         uses: actions/checkout@v3
-      - name: Install SSH client, rsync, and dependencies
+      - name: List Repository Contents
+        run: ls -R
+      - name: Configure AWS credentials
         run: |
-          sudo apt-get update -y
-          sudo apt-get install -y openssh-client rsync
-      - name: Execute build-ami.sh script
+          aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+          aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+          aws configure set region eu-west-2
+      - name: Get runner IP address
+        id: ip
+        uses: haythem/public-ip@v1.2
+      - name: Whitelist runner IP address
         run: |
-          chmod +x ./scripts/build-ami.sh
-          ./scripts/build-ami.sh
-      - name: Set up SSH agent and deploy
+          aws ec2 authorize-security-group-ingress \
+            --group-id $AWS_INSTANCE_SG_ID \
+            --protocol tcp \
+            --port 22 \
+            --cidr ${{ steps.ip.outputs.ipv4 }}/32
+      - name: Call a Bash Script
         run: |
-          eval $(ssh-agent -s)
-          echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-          rsync -av -e "ssh -o StrictHostKeyChecking=no" ./* ec2-user@${{ secrets.EC2_1_IP }}:/var/acebook/
-          ssh -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_1_IP }} "sudo systemctl restart acebook"
-          rsync -av -e "ssh -o StrictHostKeyChecking=no" ./* ec2-user@${{ secrets.EC2_2_IP }}:/var/acebook/
-          ssh -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_2_IP }} "sudo systemctl restart acebook"
-          
+          chmod +x scripts/deploy-to-instance.sh
+          ./scripts/deploy-to-instance.sh
+      - name: Revoke runner IP address
+        run: |
+          aws ec2 revoke-security-group-ingress \
+            --group-id $AWS_INSTANCE_SG_ID \
+            --protocol tcp \
+            --port 22 \
+            --cidr ${{ steps.ip.outputs.ipv4 }}/32
